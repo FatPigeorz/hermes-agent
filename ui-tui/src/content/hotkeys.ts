@@ -16,7 +16,11 @@ const copyHotkeys: [string, string][] = isMac
     : [['Ctrl+C', 'copy selection / interrupt / clear draft / exit']]
 
 export const HOTKEYS: [string, string][] = [
+  ['drag', 'select text in transcript (auto-copies on release)'],
+  ['double / triple click', 'select word / line'],
+  ['click input', 'position cursor inside the prompt'],
   ...copyHotkeys,
+  ['Esc', 'clear selection'],
   [action + '+D', 'exit'],
   [action + '+G / Alt+G', 'open $EDITOR (Alt+G fallback for VSCode/Cursor)'],
   [action + '+L', 'redraw / repaint'],

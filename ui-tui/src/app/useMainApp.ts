@@ -142,10 +142,72 @@ export function useMainApp(gw: GatewayClient) {
 
   const hasSelection = useHasSelection()
   const selection = useSelection()
+  const copyOnSelect = ui.copyOnSelect
 
   useEffect(() => {
     selection.setSelectionBgColor(ui.theme.color.selectionBg)
   }, [selection, ui.theme.color.selectionBg])
+
+  // Auto copy-on-select: when a drag completes with a real selection
+  // (anchor + focus, not a bare click), push the text to the clipboard
+  // without clearing the highlight. Matches iTerm2's "Copy to pasteboard
+  // on selection" — drag → release → already on clipboard, paste anywhere.
+  // Subscribes once and tracks the previous isDragging on a ref so the
+  // effect doesn't re-attach on every selection tick.
+  const wasDraggingRef = useRef(false)
+  const lastCopiedRef = useRef<{ anchor: string; focus: string } | null>(null)
+
+  useEffect(() => {
+    if (!copyOnSelect) {
+      wasDraggingRef.current = false
+
+      return
+    }
+
+    const fingerprint = (s: { anchor: { col: number; row: number } | null; focus: { col: number; row: number } | null }) => ({
+      anchor: s.anchor ? `${s.anchor.row}:${s.anchor.col}` : '',
+      focus: s.focus ? `${s.focus.row}:${s.focus.col}` : ''
+    })
+
+    return selection.subscribe(() => {
+      const state = selection.getState()
+
+      if (!state) {
+        return
+      }
+
+      const dragging = state.isDragging
+      const prev = wasDraggingRef.current
+      wasDraggingRef.current = dragging
+
+      if (!state.anchor) {
+        lastCopiedRef.current = null
+
+        return
+      }
+
+      if (!prev || dragging || !state.focus) {
+        return
+      }
+
+      const fp = fingerprint(state)
+      const last = lastCopiedRef.current
+
+      if (last && last.anchor === fp.anchor && last.focus === fp.focus) {
+        return
+      }
+
+      lastCopiedRef.current = fp
+
+      void selection.copySelectionNoClear().then(text => {
+        if (text) {
+          const len = text.length
+
+          turnController.pushActivity(`copied ${len} char${len === 1 ? '' : 's'} · Esc to clear`, 'info')
+        }
+      })
+    })
+  }, [copyOnSelect, selection])
 
   const composer = useComposerState({
     gw,

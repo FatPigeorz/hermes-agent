@@ -3134,6 +3134,27 @@ def _(rid, params: dict) -> dict:
         _write_config_key("display.tui_mouse", nv)
         return _ok(rid, {"key": key, "value": "on" if nv else "off"})
 
+    if key == "copy_on_select":
+        raw = str(value or "").strip().lower()
+        display = (
+            _load_cfg().get("display")
+            if isinstance(_load_cfg().get("display"), dict)
+            else {}
+        )
+        current = bool(display.get("tui_copy_on_select", True))
+
+        if raw in ("", "toggle"):
+            nv = not current
+        elif raw == "on":
+            nv = True
+        elif raw == "off":
+            nv = False
+        else:
+            return _err(rid, 4002, f"unknown copy_on_select value: {value}")
+
+        _write_config_key("display.tui_copy_on_select", nv)
+        return _ok(rid, {"key": key, "value": "on" if nv else "off"})
+
     if key in ("prompt", "personality", "skin"):
         try:
             cfg = _load_cfg()
@@ -3280,6 +3301,14 @@ def _(rid, params: dict) -> dict:
     if key == "mouse":
         display = _load_cfg().get("display")
         on = display.get("tui_mouse", True) if isinstance(display, dict) else True
+        return _ok(rid, {"value": "on" if on else "off"})
+    if key == "copy_on_select":
+        display = _load_cfg().get("display")
+        on = (
+            display.get("tui_copy_on_select", True)
+            if isinstance(display, dict)
+            else True
+        )
         return _ok(rid, {"value": "on" if on else "off"})
     if key == "mtime":
         cfg_path = _hermes_home / "config.yaml"

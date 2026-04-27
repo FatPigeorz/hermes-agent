@@ -44,6 +44,7 @@ export const applyDisplay = (cfg: ConfigFullResponse | null, setBell: (v: boolea
   setBell(!!d.bell_on_complete)
   patchUiState({
     compact: !!d.tui_compact,
+    copyOnSelect: d.tui_copy_on_select !== false,
     detailsMode: resolveDetailsMode(d),
     detailsModeCommandOverride: false,
     inlineDiffs: d.inline_diffs !== false,
