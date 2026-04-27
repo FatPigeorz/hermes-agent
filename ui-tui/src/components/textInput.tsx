@@ -915,11 +915,12 @@ export function TextInput({
 
   return (
     <Box
-      onClick={(e: { localRow?: number; localCol?: number }) => {
+      onClick={(e: { localCol?: number; localRow?: number; stopImmediatePropagation?: () => void }) => {
         if (!focus) {
           return
         }
 
+        e.stopImmediatePropagation?.()
         clearSel()
         const pos = mouseOffset(e)
         const next = offsetFromPosition(display, pos.row, pos.col, columns)

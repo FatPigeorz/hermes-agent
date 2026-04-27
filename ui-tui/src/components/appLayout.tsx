@@ -47,7 +47,18 @@ const TranscriptPane = memo(function TranscriptPane({
 
   return (
     <>
-      <ScrollBox flexDirection="column" flexGrow={1} flexShrink={1} ref={transcript.scrollRef} stickyScroll>
+      <ScrollBox
+        flexDirection="column"
+        flexGrow={1}
+        flexShrink={1}
+        onClick={(e: { cellIsBlank?: boolean }) => {
+          if (e.cellIsBlank) {
+            actions.clearSelection()
+          }
+        }}
+        ref={transcript.scrollRef}
+        stickyScroll
+      >
         <Box flexDirection="column" paddingX={1}>
           {transcript.virtualHistory.topSpacer > 0 ? <Box height={transcript.virtualHistory.topSpacer} /> : null}
 
@@ -118,7 +129,17 @@ const ComposerPane = memo(function ComposerPane({
   const inputHeight = inputVisualHeight(composer.input, inputColumns)
 
   return (
-    <NoSelect flexDirection="column" flexShrink={0} fromLeftEdge paddingX={1}>
+    <NoSelect
+      flexDirection="column"
+      flexShrink={0}
+      fromLeftEdge
+      onClick={(e: { cellIsBlank?: boolean }) => {
+        if (e.cellIsBlank) {
+          actions.clearSelection()
+        }
+      }}
+      paddingX={1}
+    >
       <QueuedMessages
         cols={composer.cols}
         queued={composer.queuedDisplay}
