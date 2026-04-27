@@ -1,6 +1,6 @@
 import type { InputEvent, Key } from '@hermes/ink'
 import * as Ink from '@hermes/ink'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type MutableRefObject, useEffect, useMemo, useRef, useState } from 'react'
 
 import { setInputSelection } from '../app/inputSelectionStore.js'
 import { readClipboardText, writeClipboardText } from '../lib/clipboard.js'
@@ -288,6 +288,7 @@ export function TextInput({
   onPaste,
   onSubmit,
   mask,
+  mouseApiRef,
   placeholder = '',
   focus = true
 }: TextInputProps) {
@@ -657,6 +658,49 @@ export function TextInput({
     row: e.localRow ?? 0
   })
 
+  const startMouseSelection = (next: number) => {
+    const c = snapPos(vRef.current, next)
+
+    mouseAnchorRef.current = c
+    selRef.current = { end: c, start: c }
+    setSel(null)
+    setCur(c)
+    curRef.current = c
+  }
+
+  const dragMouseSelection = (next: number) => {
+    if (mouseAnchorRef.current === null) {
+      return
+    }
+
+    const c = snapPos(vRef.current, next)
+    const range = { end: c, start: mouseAnchorRef.current }
+    selRef.current = range
+    setSel(range.start === range.end ? null : range)
+    setCur(c)
+    curRef.current = c
+  }
+
+  const endMouseSelection = () => {
+    mouseAnchorRef.current = null
+
+    const range = selRef.current
+
+    if (range && range.start === range.end) {
+      selRef.current = null
+      setSel(null)
+    }
+  }
+
+  if (mouseApiRef) {
+    mouseApiRef.current = {
+      dragAt: (row, col) => dragMouseSelection(offsetFromPosition(display, row, col, columns)),
+      end: endMouseSelection,
+      startAt: (row, col) => startMouseSelection(offsetFromPosition(display, row, col, columns)),
+      startAtBeginning: () => startMouseSelection(0)
+    }
+  }
+
   useInput(
     (inp: string, k: Key, event: InputEvent) => {
       const eventRaw = event.keypress.raw
@@ -946,11 +990,7 @@ export function TextInput({
 
         const pos = mouseOffset(e)
         const next = offsetFromPosition(display, pos.row, pos.col, columns)
-        mouseAnchorRef.current = next
-        selRef.current = { end: next, start: next }
-        setSel(null)
-        setCur(next)
-        curRef.current = next
+        startMouseSelection(next)
       }}
       onMouseDrag={(e: { button: number; localCol?: number; localRow?: number }) => {
         if (!focus || e.button !== 0 || mouseAnchorRef.current === null) {
@@ -959,22 +999,9 @@ export function TextInput({
 
         const pos = mouseOffset(e)
         const next = offsetFromPosition(display, pos.row, pos.col, columns)
-        const range = { end: next, start: mouseAnchorRef.current }
-        selRef.current = range
-        setSel(range.start === range.end ? null : range)
-        setCur(next)
-        curRef.current = next
+        dragMouseSelection(next)
       }}
-      onMouseUp={() => {
-        mouseAnchorRef.current = null
-
-        const range = selRef.current
-
-        if (range && range.start === range.end) {
-          selRef.current = null
-          setSel(null)
-        }
-      }}
+      onMouseUp={endMouseSelection}
       marginLeft={capturePad ? -capturePad : undefined}
       paddingLeft={capturePad || undefined}
       ref={boxRef}
@@ -998,6 +1025,7 @@ interface TextInputProps {
   focus?: boolean
   leftCaptureColumns?: number
   mask?: string
+  mouseApiRef?: MutableRefObject<null | TextInputMouseApi>
   onChange: (v: string) => void
   onPaste?: (
     e: PasteEvent
@@ -1005,4 +1033,11 @@ interface TextInputProps {
   onSubmit?: (v: string) => void
   placeholder?: string
   value: string
+}
+
+export interface TextInputMouseApi {
+  dragAt: (row: number, col: number) => void
+  end: () => void
+  startAt: (row: number, col: number) => void
+  startAtBeginning: () => void
 }

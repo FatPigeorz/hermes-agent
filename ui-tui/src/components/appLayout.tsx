@@ -1,6 +1,6 @@
 import { AlternateScreen, Box, NoSelect, ScrollBox, Text } from '@hermes/ink'
 import { useStore } from '@nanostores/react'
-import { Fragment, memo, useMemo } from 'react'
+import { Fragment, memo, useMemo, useRef } from 'react'
 
 import { useGateway } from '../app/gatewayContext.js'
 import type { AppLayoutProps } from '../app/interfaces.js'
@@ -20,7 +20,7 @@ import { FpsOverlay } from './fpsOverlay.js'
 import { MessageLine } from './messageLine.js'
 import { QueuedMessages } from './queuedMessages.js'
 import { LiveTodoPanel, StreamingAssistant } from './streamingAssistant.js'
-import { TextInput } from './textInput.js'
+import { TextInput, type TextInputMouseApi } from './textInput.js'
 
 const TranscriptPane = memo(function TranscriptPane({
   actions,
@@ -127,6 +127,23 @@ const ComposerPane = memo(function ComposerPane({
   const pw = sh ? 2 : 3
   const inputColumns = stableComposerColumns(composer.cols, pw)
   const inputHeight = inputVisualHeight(composer.input, inputColumns)
+  const inputMouseRef = useRef<null | TextInputMouseApi>(null)
+  const captureInputDrag = (e: { button: number; localCol?: number; localRow?: number; stopImmediatePropagation?: () => void }) => {
+    if (e.button !== 0) {
+      return
+    }
+
+    e.stopImmediatePropagation?.()
+    inputMouseRef.current?.startAtBeginning()
+  }
+  const dragIntoInput = (e: { button: number; localCol?: number; localRow?: number; stopImmediatePropagation?: () => void }) => {
+    if (e.button !== 0) {
+      return
+    }
+
+    e.stopImmediatePropagation?.()
+    inputMouseRef.current?.dragAt(e.localRow ?? 0, (e.localCol ?? 0) - pw)
+  }
 
   return (
     <NoSelect
@@ -188,7 +205,7 @@ const ComposerPane = memo(function ComposerPane({
             ))}
 
             <Box position="relative">
-              <Box width={pw}>
+              <Box onMouseDown={captureInputDrag} onMouseDrag={dragIntoInput} onMouseUp={() => inputMouseRef.current?.end()} width={pw}>
                 {sh ? (
                   <Text color={ui.theme.color.shellDollar}>$ </Text>
                 ) : (
@@ -202,7 +219,7 @@ const ComposerPane = memo(function ComposerPane({
                 {/* Reserve the transcript scrollbar gutter too so typing never rewraps when the scrollbar column repaints. */}
                 <TextInput
                   columns={inputColumns}
-                  leftCaptureColumns={1}
+                  mouseApiRef={inputMouseRef}
                   onChange={composer.updateInput}
                   onPaste={composer.handleTextPaste}
                   onSubmit={composer.submit}
