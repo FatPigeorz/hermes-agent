@@ -122,3 +122,13 @@ def test_dockerfile_builds_tui_assets(dockerfile_text):
         and "run build" in step
         for step in _run_steps(dockerfile_text)
     )
+
+
+def test_dockerfile_materializes_local_tui_ink_package(dockerfile_text):
+    assert any(
+        "ui-tui" in step
+        and "node_modules/@hermes/ink" in step
+        and "packages/hermes-ink" in step
+        and "import('@hermes/ink')" in step
+        for step in _run_steps(dockerfile_text)
+    )
