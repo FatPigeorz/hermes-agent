@@ -1,4 +1,4 @@
-import { AlternateScreen, Box, NoSelect, ScrollBox, Text } from '@hermes/ink'
+import { AlternateScreen, Box, NoSelect, ScrollBox, stringWidth, Text } from '@hermes/ink'
 import { useStore } from '@nanostores/react'
 import { Fragment, memo, useMemo } from 'react'
 
@@ -113,8 +113,10 @@ const ComposerPane = memo(function ComposerPane({
   const ui = useStore($uiState)
   const isBlocked = useStore($isBlocked)
   const sh = (composer.inputBuf[0] ?? composer.input).startsWith('!')
-  const pw = sh ? 2 : 3
-  const inputColumns = stableComposerColumns(composer.cols, pw)
+  const promptText = sh ? '$' : ui.theme.brand.prompt
+  const promptLabel = `${promptText} `
+  const promptWidth = Math.max(1, stringWidth(promptLabel))
+  const inputColumns = stableComposerColumns(composer.cols, promptWidth)
   const inputHeight = inputVisualHeight(composer.input, inputColumns)
 
   return (
@@ -158,8 +160,8 @@ const ComposerPane = memo(function ComposerPane({
           <>
             {composer.inputBuf.map((line, i) => (
               <Box key={i}>
-                <Box width={3}>
-                  <Text color={ui.theme.color.muted}>{i === 0 ? `${ui.theme.brand.prompt} ` : '  '}</Text>
+                <Box width={promptWidth}>
+                  <Text color={ui.theme.color.muted}>{i === 0 ? promptLabel : ' '.repeat(promptWidth)}</Text>
                 </Box>
 
                 <Text color={ui.theme.color.text}>{line || ' '}</Text>
@@ -167,12 +169,12 @@ const ComposerPane = memo(function ComposerPane({
             ))}
 
             <Box position="relative">
-              <Box width={pw}>
+              <Box width={promptWidth}>
                 {sh ? (
-                  <Text color={ui.theme.color.shellDollar}>$ </Text>
+                  <Text color={ui.theme.color.shellDollar}>{promptLabel}</Text>
                 ) : (
                   <Text bold color={ui.theme.color.prompt}>
-                    {composer.inputBuf.length ? '  ' : `${ui.theme.brand.prompt} `}
+                    {composer.inputBuf.length ? ' '.repeat(promptWidth) : promptLabel}
                   </Text>
                 )}
               </Box>
