@@ -309,6 +309,7 @@ export function TextInput({
   const pendingParentValue = useRef<string | null>(null)
   const localRenderTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lineWidthRef = useRef(stringWidth(value.includes('\n') ? value.slice(value.lastIndexOf('\n') + 1) : value))
+  const mouseAnchorRef = useRef<null | number>(null)
   const undo = useRef<{ cursor: number; value: string }[]>([])
   const redo = useRef<{ cursor: number; value: string }[]>([])
 
@@ -605,6 +606,22 @@ export function TextInput({
     curRef.current = end
   }
 
+  const moveCursor = (next: number, extend = false) => {
+    const c = snapPos(vRef.current, next)
+
+    if (extend) {
+      const anchor = selRef.current?.start ?? curRef.current
+      const nextSel = { end: c, start: anchor }
+      selRef.current = nextSel
+      setSel(nextSel)
+    } else {
+      clearSel()
+    }
+
+    setCur(c)
+    curRef.current = c
+  }
+
   const selRange = () => {
     const range = selRef.current
 
@@ -674,9 +691,7 @@ export function TextInput({
         const next = lineNav(vRef.current, curRef.current, k.upArrow ? -1 : 1)
 
         if (next !== null) {
-          clearSel()
-          setCur(next)
-          curRef.current = next
+          moveCursor(next, k.shift)
 
           return
         }
@@ -737,27 +752,37 @@ export function TextInput({
       }
 
       if (actionHome) {
-        clearSel()
         c = 0
+        moveCursor(c, k.shift)
+
+        return
       } else if (actionEnd) {
-        clearSel()
         c = v.length
+        moveCursor(c, k.shift)
+
+        return
       } else if (k.leftArrow) {
-        if (range && !wordMod) {
+        if (range && !wordMod && !k.shift) {
           clearSel()
           c = range.start
         } else {
-          clearSel()
           c = wordMod ? wordLeft(v, c) : prevPos(v, c)
         }
+
+        moveCursor(c, k.shift)
+
+        return
       } else if (k.rightArrow) {
-        if (range && !wordMod) {
+        if (range && !wordMod && !k.shift) {
           clearSel()
           c = range.end
         } else {
-          clearSel()
           c = wordMod ? wordRight(v, c) : nextPos(v, c)
         }
+
+        moveCursor(c, k.shift)
+
+        return
       } else if (wordMod && inp === 'b') {
         clearSel()
         c = wordLeft(v, c)
@@ -893,14 +918,51 @@ export function TextInput({
         setCur(next)
         curRef.current = next
       }}
-      onMouseDown={(e: { button: number }) => {
-        // Right-click to paste: route through the same hotkey path as
-        // Alt+V so the composer's clipboard RPC (text or image) handles it.
-        if (!focus || e.button !== 2) {
+      onMouseDown={(e: { button: number; localCol?: number; localRow?: number }) => {
+        if (!focus) {
           return
         }
 
-        emitPaste({ cursor: curRef.current, hotkey: true, text: '', value: vRef.current })
+        // Right-click to paste: route through the same hotkey path as
+        // Alt+V so the composer's clipboard RPC (text or image) handles it.
+        if (e.button === 2) {
+          emitPaste({ cursor: curRef.current, hotkey: true, text: '', value: vRef.current })
+
+          return
+        }
+
+        if (e.button !== 0) {
+          return
+        }
+
+        const next = offsetFromPosition(display, e.localRow ?? 0, e.localCol ?? 0, columns)
+        mouseAnchorRef.current = next
+        selRef.current = { end: next, start: next }
+        setSel(null)
+        setCur(next)
+        curRef.current = next
+      }}
+      onMouseDrag={(e: { button: number; localCol?: number; localRow?: number }) => {
+        if (!focus || e.button !== 0 || mouseAnchorRef.current === null) {
+          return
+        }
+
+        const next = offsetFromPosition(display, e.localRow ?? 0, e.localCol ?? 0, columns)
+        const range = { end: next, start: mouseAnchorRef.current }
+        selRef.current = range
+        setSel(range.start === range.end ? null : range)
+        setCur(next)
+        curRef.current = next
+      }}
+      onMouseUp={() => {
+        mouseAnchorRef.current = null
+
+        const range = selRef.current
+
+        if (range && range.start === range.end) {
+          selRef.current = null
+          setSel(null)
+        }
       }}
       ref={boxRef}
     >
