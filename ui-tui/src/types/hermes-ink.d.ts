@@ -139,17 +139,12 @@ declare module '@hermes/ink' {
   export function useExternalProcess(): (run: RunExternalProcess) => Promise<void>
   export function withInkSuspended(run: RunExternalProcess): Promise<void>
   export function useInput(handler: InputHandler, options?: { readonly isActive?: boolean }): void
-  export type InkSelectionState = {
-    readonly anchor: { readonly col: number; readonly row: number } | null
-    readonly focus: { readonly col: number; readonly row: number } | null
-    readonly isDragging: boolean
-  }
   export function useSelection(): {
     readonly copySelection: () => Promise<string>
     readonly copySelectionNoClear: () => Promise<string>
     readonly clearSelection: () => void
     readonly hasSelection: () => boolean
-    readonly getState: () => InkSelectionState | null
+    readonly getState: () => unknown
     readonly subscribe: (cb: () => void) => () => void
     readonly shiftAnchor: (dRow: number, minRow: number, maxRow: number) => void
     readonly shiftSelection: (dRow: number, minRow: number, maxRow: number) => void

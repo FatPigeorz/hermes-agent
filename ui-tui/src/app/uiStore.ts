@@ -1,6 +1,6 @@
 import { atom } from 'nanostores'
 
-import { COPY_ON_SELECT, MOUSE_TRACKING } from '../config/env.js'
+import { MOUSE_TRACKING } from '../config/env.js'
 import { ZERO } from '../domain/usage.js'
 import { DEFAULT_THEME } from '../theme.js'
 
@@ -10,7 +10,6 @@ const buildUiState = (): UiState => ({
   bgTasks: new Set(),
   busy: false,
   compact: false,
-  copyOnSelect: COPY_ON_SELECT,
   detailsMode: 'collapsed',
   detailsModeCommandOverride: false,
   info: null,

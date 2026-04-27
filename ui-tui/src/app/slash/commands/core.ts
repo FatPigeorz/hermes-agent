@@ -108,27 +108,6 @@ export const coreCommands: SlashCommand[] = [
   },
 
   {
-    aliases: ['cos'],
-    help: 'toggle auto copy-on-drag-release [on|off|toggle]',
-    name: 'copyselect',
-    run: (arg, ctx) => {
-      const current = ctx.ui.copyOnSelect
-      const next = flagFromArg(arg, current)
-
-      if (next === null) {
-        return ctx.transcript.sys('usage: /copyselect [on|off|toggle]')
-      }
-
-      patchUiState({ copyOnSelect: next })
-      ctx.gateway
-        .rpc<ConfigSetResponse>('config.set', { key: 'copy_on_select', value: next ? 'on' : 'off' })
-        .catch(() => {})
-
-      queueMicrotask(() => ctx.transcript.sys(`copy-on-select ${next ? 'on' : 'off'}`))
-    }
-  },
-
-  {
     aliases: ['new'],
     help: 'start a new session',
     name: 'clear',

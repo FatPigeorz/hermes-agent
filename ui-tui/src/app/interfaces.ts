@@ -86,7 +86,6 @@ export interface UiState {
   bgTasks: Set<string>
   busy: boolean
   compact: boolean
-  copyOnSelect: boolean
   detailsMode: DetailsMode
   detailsModeCommandOverride: boolean
   info: null | SessionInfo

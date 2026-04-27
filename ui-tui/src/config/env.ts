@@ -2,9 +2,6 @@ const truthy = (v?: string) => /^(?:1|true|yes|on)$/i.test((v ?? '').trim())
 
 export const STARTUP_RESUME_ID = (process.env.HERMES_TUI_RESUME ?? '').trim()
 export const MOUSE_TRACKING = !truthy(process.env.HERMES_TUI_DISABLE_MOUSE)
-// Drag-release auto-copies the selected text. Off by default for terminals
-// that do clipboard their own way; opt out with the env var or /copyselect.
-export const COPY_ON_SELECT = !truthy(process.env.HERMES_TUI_DISABLE_COPY_ON_SELECT)
 export const NO_CONFIRM_DESTRUCTIVE = truthy(process.env.HERMES_TUI_NO_CONFIRM)
 
 // Skip AlternateScreen — TUI renders into the primary buffer so the host
