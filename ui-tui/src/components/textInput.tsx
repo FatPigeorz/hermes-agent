@@ -384,6 +384,9 @@ export function TextInput({
           selRef.current = null
           setSel(null)
         }
+
+        setCur(vRef.current.length)
+        curRef.current = vRef.current.length
       },
       end: selected?.end ?? curRef.current,
       start: selected?.start ?? curRef.current,
