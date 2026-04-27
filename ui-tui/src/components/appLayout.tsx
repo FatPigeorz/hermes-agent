@@ -206,16 +206,13 @@ const ComposerPane = memo(function ComposerPane({
 
             <Box position="relative">
               <Box
-                height={inputHeight}
-                left={-1}
+                marginLeft={-1}
                 onMouseDown={captureInputDrag}
                 onMouseDrag={dragIntoInput}
                 onMouseUp={() => inputMouseRef.current?.end()}
-                position="absolute"
-                width={1}
-              />
-
-              <Box onMouseDown={captureInputDrag} onMouseDrag={dragIntoInput} onMouseUp={() => inputMouseRef.current?.end()} width={pw}>
+                paddingLeft={1}
+                width={pw + 1}
+              >
                 {sh ? (
                   <Text color={ui.theme.color.shellDollar}>$ </Text>
                 ) : (
