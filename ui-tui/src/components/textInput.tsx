@@ -282,6 +282,7 @@ const isPasteResultPromise = (
 
 export function TextInput({
   columns = 80,
+  leftCaptureColumns = 0,
   value,
   onChange,
   onPaste,
@@ -330,10 +331,11 @@ export function TextInput({
   )
 
   const layout = useMemo(() => cursorLayout(display, cur, columns), [columns, cur, display])
+  const capturePad = Math.max(0, leftCaptureColumns)
 
   const boxRef = useDeclaredCursor({
     line: layout.line,
-    column: layout.column,
+    column: layout.column + capturePad,
     active: focus && termFocus && !selected
   })
 
@@ -650,6 +652,11 @@ export function TextInput({
     commit(nextValue, nextCursor)
   }
 
+  const mouseOffset = (e: { localCol?: number; localRow?: number }) => ({
+    col: (e.localCol ?? 0) - capturePad,
+    row: e.localRow ?? 0
+  })
+
   useInput(
     (inp: string, k: Key, event: InputEvent) => {
       const eventRaw = event.keypress.raw
@@ -914,7 +921,8 @@ export function TextInput({
         }
 
         clearSel()
-        const next = offsetFromPosition(display, e.localRow ?? 0, e.localCol ?? 0, columns)
+        const pos = mouseOffset(e)
+        const next = offsetFromPosition(display, pos.row, pos.col, columns)
         setCur(next)
         curRef.current = next
       }}
@@ -935,7 +943,8 @@ export function TextInput({
           return
         }
 
-        const next = offsetFromPosition(display, e.localRow ?? 0, e.localCol ?? 0, columns)
+        const pos = mouseOffset(e)
+        const next = offsetFromPosition(display, pos.row, pos.col, columns)
         mouseAnchorRef.current = next
         selRef.current = { end: next, start: next }
         setSel(null)
@@ -947,7 +956,8 @@ export function TextInput({
           return
         }
 
-        const next = offsetFromPosition(display, e.localRow ?? 0, e.localCol ?? 0, columns)
+        const pos = mouseOffset(e)
+        const next = offsetFromPosition(display, pos.row, pos.col, columns)
         const range = { end: next, start: mouseAnchorRef.current }
         selRef.current = range
         setSel(range.start === range.end ? null : range)
@@ -964,7 +974,10 @@ export function TextInput({
           setSel(null)
         }
       }}
+      marginLeft={capturePad ? -capturePad : undefined}
+      paddingLeft={capturePad || undefined}
       ref={boxRef}
+      width={columns + capturePad}
     >
       <Text wrap="wrap-char">{rendered}</Text>
     </Box>
@@ -982,6 +995,7 @@ export interface PasteEvent {
 interface TextInputProps {
   columns?: number
   focus?: boolean
+  leftCaptureColumns?: number
   mask?: string
   onChange: (v: string) => void
   onPaste?: (
