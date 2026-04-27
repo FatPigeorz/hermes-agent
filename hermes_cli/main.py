@@ -830,7 +830,7 @@ def _print_tui_exit_summary(session_id: Optional[str], active_session_file: Opti
 
 
 def _tui_need_npm_install(root: Path) -> bool:
-    """True when @hermes/ink is missing or node_modules is behind package-lock.json (post-pull)."""
+    """True when @hermes/ink is missing or node_modules is behind package-lock.json."""
     ink = root / "node_modules" / "@hermes" / "ink" / "package.json"
     if not ink.is_file():
         return True
@@ -840,7 +840,32 @@ def _tui_need_npm_install(root: Path) -> bool:
     marker = root / "node_modules" / ".package-lock.json"
     if not marker.is_file():
         return True
-    return lock.stat().st_mtime > marker.stat().st_mtime
+
+    try:
+        wanted = json.loads(lock.read_text(encoding="utf-8")).get("packages") or {}
+        installed = json.loads(marker.read_text(encoding="utf-8")).get("packages") or {}
+    except (OSError, json.JSONDecodeError):
+        return lock.stat().st_mtime > marker.stat().st_mtime
+
+    ignored = {"ideallyInert"}
+
+    def comparable(pkg: dict) -> dict:
+        return {k: v for k, v in pkg.items() if k not in ignored}
+
+    for name, pkg in wanted.items():
+        if name == "":
+            continue
+
+        if name not in installed:
+            if isinstance(pkg, dict) and (pkg.get("optional") or pkg.get("peer")):
+                continue
+            return True
+
+        if isinstance(pkg, dict) and isinstance(installed[name], dict):
+            if comparable(pkg) != comparable(installed[name]):
+                return True
+
+    return False
 
 
 def _find_bundled_tui(tui_dir: Path) -> Optional[Path]:
