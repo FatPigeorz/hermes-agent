@@ -74,6 +74,7 @@ def _parse_int_setting(value: Any, default: int) -> int:
         return default
 
 
+
 def _check_local_runtime() -> tuple[bool, str | None]:
     """Return whether local embedded Hindsight imports cleanly.
 
@@ -833,6 +834,7 @@ class HindsightMemoryProvider(MemoryProvider):
             client = self._get_client()
             self._client = client
             return self._run_sync(operation(client))
+
 
     def initialize(self, session_id: str, **kwargs) -> None:
         self._session_id = str(session_id or "").strip()

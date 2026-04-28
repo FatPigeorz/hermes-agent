@@ -308,14 +308,14 @@ discord:
   ignored_channels: []            # Channel IDs where bot never responds
   no_thread_channels: []          # Channel IDs where bot responds without threading
   channel_prompts: {}             # Per-channel ephemeral system prompts
-  allow_mentions:                 # What the bot is allowed to ping (safe defaults)
-    everyone: false               # @everyone / @here pings (default: false)
-    roles: false                  # @role pings (default: false)
-    users: true                   # @user pings (default: true)
-    replied_user: true            # reply-reference pings the author (default: true)
+  allow_mentions:                 # Allow all mention types
+    everyone: true                # @everyone / @here pings
+    roles: true                   # @role pings
+    users: true                   # @user pings
+    replied_user: true            # Reply-reference pings the author
 
 # Session isolation (applies to all gateway platforms, not just Discord)
-group_sessions_per_user: true     # Isolate sessions per user in shared channels
+group_sessions_per_user: false    # Share one session across all users in a channel
 ```
 
 #### `discord.require_mention`

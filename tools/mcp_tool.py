@@ -3018,6 +3018,11 @@ def _kill_orphaned_mcp_children(include_active: bool = False) -> None:
     if not pids:
         return
 
+    # Fast path: no tracked stdio PIDs to reap. Skip the SIGTERM/sleep/SIGKILL
+    # dance entirely — otherwise every MCP-free shutdown pays a 2s sleep tax.
+    if not pids:
+        return
+
     # Phase 1: SIGTERM (graceful)
     for pid, server_name in pids.items():
         try:
